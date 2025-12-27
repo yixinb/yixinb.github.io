@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全局密码授权链接生成器</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .password-banner {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-container {
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tab-buttons {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button.active {
+            color: #FF6B6B;
+            border-bottom-color: #FF6B6B;
+            background: white;
+            font-weight: bold;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            background: white;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            border-color: #FF6B6B;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #868e96);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            display: none;
+            border-left: 4px solid #FF6B6B;
+        }
+
+        .session-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .data-display {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .session-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .session-item:hover {
+            border-color: #FF6B6B;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .session-detail {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #FF6B6B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .tab-buttons {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                text-align: center;
+                border-bottom: none;
+                border-left: 3px solid transparent;
+            }
+
+            .tab-button.active {
+                border-left-color: #FF6B6B;
+                border-bottom: none;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔐 全局密码授权链接生成器</h1>
+
+        <div class="password-banner" id="passwordBanner">
+            🔑 当前全局查询密码: <span id="currentPassword">加载中...</span>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('generate')">生成链接</button>
+                <button class="tab-button" onclick="switchTab('query')">查询数据</button>
+                <button class="tab-button" onclick="switchTab('password')">密码管理</button>
+            </div>
+
+            <!-- 生成链接标签页 -->
+            <div id="generateTab" class="tab-content active">
+                <h3>🎮 生成授权链接</h3>
+                <p>点击按钮生成授权链接，复制后发给他人使用。链接将引导用户通过和平营地App完成QQ授权。</p>
+
+                <button class="btn" onclick="generateLink()">
+                    <span>🔗</span> 生成授权链接
+                </button>
+
+                <div id="generateResult" class="result-box">
+                    <!-- 生成结果将动态显示在这里 -->
+                </div>
+            </div>
+
+            <!-- 查询数据标签页 -->
+            <div id="queryTab" class="tab-content">
+                <h3>📊 查询授权数据</h3>
+                <p>使用全局查询密码查看已完成的授权数据。</p>
+
+                <div class="input-group">
+                    <label>查询密码（6位数字）:</label>
+                    <input type="password" id="queryPasswordInput" placeholder="请输入6位数字查询密码" maxlength="6">
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" onclick="queryAllSessions()">查询所有会话</button>
+                    <button class="btn btn-secondary" onclick="clearQueryResults()">清空结果</button>
+                </div>
+
+                <div id="queryResult" class="result-box">
+                    <!-- 查询结果将动态显示在这里 -->
+                </div>
+            </div>
+
+            <!-- 密码管理标签页 -->
+            <div id="passwordTab" class="tab-content">
+                <h3>🔑 密码管理</h3>
+                <p>修改全局查询密码。修改后，所有链接的数据查询都将使用新密码。</p>
+
+                <div class="input-group">
+                    <label>当前密码:</label>
+                    <input type="password" id="currentPasswordInput" placeholder="请输入当前密码">
+                </div>
+
+                <div class="input-group">
+                    <label>新密码（6位数字）:</label>
+                    <input type="password" id="newPasswordInput" placeholder="请输入6位数字新密码" maxlength="6">
+                </div>
+
+                <button class="btn" onclick="changePassword()">修改密码</button>
+
+                <div id="passwordResult" class="result-box">
+                    <!-- 密码修改结果将显示在这里 -->
+                </div>
+
+                <div class="session-info">
+                    <strong>💡 重要提示:</strong><br>
+                    • 密码修改后立即生效<br>
+                    • 服务重启后密码将重置为默认值<br>
+                    • 请妥善保管密码，避免泄露
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+            <strong>📋 使用说明:</strong> 生成链接 → 发给他人 → 授权完成 → 数据回传 → 密码查询
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🔐 全局密码授权系统前台加载完成');
+            loadCurrentPassword();
+            initializeEventListeners();
+
+            // 检查URL参数中的会话ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session');
+            if (sessionId) {
+                showSessionFromURL(sessionId);
+            }
+        });
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 取消所有按钮的激活状态
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 显示选中的标签内容
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // 激活选中的按钮
+            event.currentTarget.classList.add('active');
+
+            // 特定标签页的初始化
+            if (tabName === 'query') {
+                clearQueryResults();
+            } else if (tabName === 'password') {
+                clearPasswordForm();
+            }
+        }
+
+        // 从URL参数显示会话
+        function showSessionFromURL(sessionId) {
+            // 切换到查询标签页
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById('queryTab').classList.add('active');
+            document.querySelector('.tab-button:nth-child(2)').classList.add('active');
+
+            // 自动填充会话ID并查询
+            setTimeout(() => {
+                document.getElementById('queryPasswordInput').focus();
+                showTempMessage(`检测到会话ID: ${sessionId}，请输入密码查询`, 'success');
+            }, 500);
+        }
+
+        // 清空查询结果
+        function clearQueryResults() {
+            document.getElementById('queryResult').style.display = 'none';
+            document.getElementById('queryPasswordInput').value = '';
+        }
+
+        // 清空密码表单
+        function clearPasswordForm() {
+            document.getElementById('passwordResult').style.display = 'none';
+            document.getElementById('currentPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+        }
+
+        // 显示临时消息
+        function showTempMessage(message, type) {
+            // 移除已存在的消息
+            const existingMessage = document.querySelector('.temp-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'temp-message';
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                color: ${type === 'success' ? '#155724' : '#721c24'};
+                border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+                border-radius: 8px;
+                z-index: 1000;
+                font-weight: bold;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                animation: slideInRight 0.3s ease-out;
+                max-width: 300px;
+                word-wrap: break-word;
+            `;
+            messageDiv.textContent = message;
+
+            document.body.appendChild(messageDiv);
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { 
+                    transform: translateX(100%); 
+                    opacity: 0; 
+                }
+                to { 
+                    transform: translateX(0); 
+                    opacity: 1; 
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 全局错误处理
+        window.addEventListener('error', function (e) {
+            console.error('页面错误:', e.error);
+            showTempMessage('页面发生错误，请查看控制台', 'error');
+        });
+    </script>
+</body>
+
+</html>
